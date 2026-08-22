@@ -1,0 +1,38 @@
+[
+    {
+        "name": "Harry Potter",
+        "author": "J.K. Rowling",
+        "publisher": "Bloomsbury",
+        "year": 2000,
+        "valume": 1,
+        "number": 2,
+        "category": "Computer"
+    },
+    {
+        "name": "1984",
+        "author": "George Orwel",
+        "publisher": "Secker & Warburg",
+        "year": 1949,
+        "valume": 1,
+        "number": 3,
+        "category": "Literature"
+    },
+    {
+        "name": "The Hobbit",
+        "author": "J.R.R. Tolkien",
+        "publisher": "Allen & Unwin",
+        "year": 1937,
+        "valume": 1,
+        "number": 1,
+        "category": "History"
+    },
+    {
+        "name": "Dune",
+        "author": "Frank Herbert",
+        "publisher": "Chilton Books",
+        "year": 1965,
+        "valume": 1,
+        "number": 2,
+        "category": "Literature"
+    }
+]

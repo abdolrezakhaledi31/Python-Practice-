@@ -1,0 +1,10 @@
+# Non-code files
+*.txt
+*.csv
+*.docx
+*.md
+
+# Common junk
+__pycache__/
+*.pyc
+.venv/
