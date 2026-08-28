@@ -2,7 +2,7 @@ import sqlite3
 
 print("========================\nWelcome to Jmaro library\n========================")
 print(
-    "Please choose\n1. Enter '1' for adding book\n2. Enter '2' for searching book\n3. Enter '3' for searching category\n4. Enter '4' for list all books\n5. Enter '5' for exit"
+    "Please choose\n1. Enter '1' for adding book\n2. Enter '2' for searching book\n3. Enter '3' for searching category\n4. Enter '4' for list all books\n5. Enter '5' for delete book\n6. Enter '6' for edit book\n7. Enter '7' for exit"
 )
 
 
@@ -53,6 +53,45 @@ class Library:
         self.cursor.execute("SELECT * FROM books")
         return self.cursor.fetchall()
 
+    def delete_book(self, name):
+        self.cursor.execute("SELECT * FROM books WHERE LOWER(name) = LOWER(?)", (name,))
+        book = self.cursor.fetchone()
+        if not book:
+            return False
+        self.cursor.execute("DELETE FROM books WHERE id = ?", (book[0],))
+        self.conn.commit()
+        return True
+
+    def edit_book(self, search_name, name=None, author=None, publisher=None, year=None,
+                  volume=None, number=None, category=None):
+        self.cursor.execute("SELECT * FROM books WHERE LOWER(name) = LOWER(?)", (search_name,))
+        book = self.cursor.fetchone()
+        if not book:
+            return False
+        updated = {
+            "name": name if name is not None else book[1],
+            "author": author if author is not None else book[2],
+            "publisher": publisher if publisher is not None else book[3],
+            "year": year if year is not None else book[4],
+            "volume": volume if volume is not None else book[5],
+            "number": number if number is not None else book[6],
+            "category": category if category is not None else book[7],
+        }
+        self.cursor.execute(
+            """
+        UPDATE books
+        SET name = ?, author = ?, publisher = ?, year = ?, volume = ?, number = ?, category = ?
+        WHERE id = ?
+        """,
+            (
+                updated["name"], updated["author"], updated["publisher"],
+                updated["year"], updated["volume"], updated["number"],
+                updated["category"], book[0],
+            ),
+        )
+        self.conn.commit()
+        return True
+
 
 jmaro_library = Library()
 if jmaro_library.count_book() == 0:
@@ -68,7 +107,10 @@ if jmaro_library.count_book() == 0:
 
 
 while True:
-    choice = input("Please Enter 1 or 2 or 3 or 4 or 5: ")
+    print(
+        "1. Add book  2. Search book  3. Search category  4. List all  5. Delete book  6. Edit book  7. Exit"
+    )
+    choice = input("Please Enter 1-7: ")
     if choice == "1":
         new_name = input("Enter a name of book: ")
         new_author = input("Enter the name of author: ")
@@ -121,6 +163,38 @@ while True:
             print("No books found")
 
     elif choice == "5":
+        del_name = input("Enter the name of book to delete: ")
+        if jmaro_library.delete_book(del_name):
+            print("Book deleted")
+        else:
+            print("No result")
+
+    elif choice == "6":
+        edit_name = input("Enter the name of book to edit: ")
+        found = jmaro_library.search_book(edit_name)
+        if not found:
+            print("No result")
+        else:
+            print("Leave field empty to keep current value")
+            new_name = input(f"New name [{found[1]}]: ") or found[1]
+            new_author = input(f"New author [{found[2]}]: ") or found[2]
+            new_publisher = input(f"New publisher [{found[3]}]: ") or found[3]
+            year_in = input(f"New year [{found[4]}]: ")
+            new_year = int(year_in) if year_in else found[4]
+            vol_in = input(f"New volume [{found[5]}]: ")
+            new_volume = int(vol_in) if vol_in else found[5]
+            num_in = input(f"New number [{found[6]}]: ")
+            new_number = int(num_in) if num_in else found[6]
+            new_category = input(f"New category [{found[7]}]: ") or found[7]
+            if jmaro_library.edit_book(
+                edit_name, new_name, new_author, new_publisher,
+                new_year, new_volume, new_number, new_category
+            ):
+                print("Book updated")
+            else:
+                print("Update failed")
+
+    elif choice == "7":
         print("Goodbye")
         break
 
