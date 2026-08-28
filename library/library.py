@@ -1,84 +1,105 @@
-import json
-import os
+import sqlite3
 
 print("========================\nWelcome to Jmaro library\n========================")
-print("Please choose\n1. Enter '1' for adding book\n2. Enter '2' for searching book\n3. Enter '3' for searching category\n4. Enter '4' for exit")
-
-
-class  Book:
-    def __init__(self, name, author, publisher, years_of_publication, valume_count, number_of_copies, category):
-        self.name = name
-        self.author = author
-        self.publisher = publisher
-        self.year = years_of_publication
-        self.valume = valume_count
-        self.number = number_of_copies
-        self.category = category
+print(
+    "Please choose\n1. Enter '1' for adding book\n2. Enter '2' for searching book\n3. Enter '3' for searching category\n4. Enter '4' for list all books\n5. Enter '5' for exit"
+)
 
 
 class Library:
     def __init__(self):
-        self.books = []
+        self.conn = sqlite3.connect("jmaro_library.db")
+        self.cursor = self.conn.cursor()
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS books(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            author TEXT,
+            publisher TEXT,
+            year INTEGER,
+            volume INTEGER,
+            number INTEGER,
+            category TEXT
+            )
+        """)
+        self.conn.commit()
 
-    def add_book(self, name, author, publisher, years_of_publication, valume_count, number_of_copies, category):
-        new_book = Book(name, author, publisher, years_of_publication, valume_count, number_of_copies, category)
-        self.books.append(new_book)
-        self.save_to_file()
+    def add_book(self, name, author, publisher, year, volume, number, category):
+        self.cursor.execute(
+            """
+        INSERT INTO books(name, author, publisher, year, volume, number, category)
+        VALUES(?, ?, ?, ?, ?, ?, ?)
+        """,
+            (name, author, publisher, year, volume, number, category),
+        )
+        self.conn.commit()
 
-    def save_to_file(self):
-        new_save = []
-        for book in self.books:
-            new_book = {"name": book.name, "author": book.author, "publisher": book.publisher, "year": book.year, "valume": book.valume, "number": book.number, "category": book.category}
-            new_save.append(new_book)
-        with open("jmaro_library.json", "w", encoding="utf-8") as file:
-            json.dump(new_save, file, ensure_ascii=False, indent=4)
-
-    def load_from_file(self):
-        with open("jmaro_library.json", "r", encoding="utf-8") as file:
-            loaded_data = json.load(file)
-            for item in loaded_data:
-                new_book = Book(item["name"], item["author"], item["publisher"], item["year"], item["valume"], item["number"], item["category"])
-                self.books.append(new_book)
+    def count_book(self):
+        self.cursor.execute("SELECT COUNT(*) FROM books")
+        result = self.cursor.fetchone()
+        return result[0]
 
     def search_book(self, name):
-        for book in self.books:
-            if book.name.lower() == name.lower():
-                return book
+        self.cursor.execute("SELECT * FROM books WHERE LOWER(name) = LOWER(?)", (name,))
+        return self.cursor.fetchone()
 
     def search_by_category(self, category):
-        result = []
-        for book in self.books:
-            if book.category.lower() == category.lower():
-                result.append(book)
-        return result
+        self.cursor.execute(
+            "SELECT * FROM books WHERE LOWER(category) = LOWER(?)", (category,)
+        )
+        return self.cursor.fetchall()
+
+    def list_all_books(self):
+        self.cursor.execute("SELECT * FROM books")
+        return self.cursor.fetchall()
 
 
 jmaro_library = Library()
-if os.path.exists("jmaro_library.json"):
-    jmaro_library.load_from_file()
-else:
-    jmaro_library.add_book("Harry Potter", "J.K. Rowling", "Bloomsbury", 2000, 1, 2, "Computer")
-    jmaro_library.add_book("1984", "George Orwel", "Secker & Warburg", 1949, 1, 3, "Literature")
-    jmaro_library.add_book("The Hobbit", "J.R.R. Tolkien", "Allen & Unwin", 1937, 1, 1, "History")
+if jmaro_library.count_book() == 0:
+    jmaro_library.add_book(
+        "Harry Potter", "J.K. Rowling", "Bloomsbury", 2000, 1, 2, "Computer"
+    )
+    jmaro_library.add_book(
+        "1984", "George Orwell", "Secker & Warburg", 1949, 1, 3, "Literature"
+    )
+    jmaro_library.add_book(
+        "The Hobbit", "J.R.R. Tolkien", "Allen & Unwin", 1937, 1, 1, "History"
+    )
 
 
 while True:
-    choice = input("Please Enter 1 or 2 or 3 or 4: ")
+    choice = input("Please Enter 1 or 2 or 3 or 4 or 5: ")
     if choice == "1":
         new_name = input("Enter a name of book: ")
         new_author = input("Enter the name of author: ")
         new_publisher = input("Enter the name of publisher: ")
-        new_year = int(input("Enter the year of publishe: "))
-        new_valume = int(input("Enter count of valume: "))
+        new_year = int(input("Enter the year of publication: "))
+        new_volume = int(input("Enter count of volume: "))
         new_number = int(input("Enter number of copies: "))
         new_category = input("Enter the name of category: ")
-        jmaro_library.add_book(new_name, new_author, new_publisher, new_year, new_valume, new_number, new_category)
+        jmaro_library.add_book(
+            new_name,
+            new_author,
+            new_publisher,
+            new_year,
+            new_volume,
+            new_number,
+            new_category,
+        )
 
     elif choice == "2":
-        search_book = input("Enter the name of book:")
-        found_book = jmaro_library.search_book(search_book)
+        search_name = input("Enter the name of book:")
+        found_book = jmaro_library.search_book(search_name)
         if found_book:
-            print(found_book.name, found_book.author, found_book.publisher, found_book.year, found_book.valume, found_book.number)
+            print(
+                found_book[1],
+                found_book[2],
+                found_book[3],
+                found_book[4],
+                found_book[5],
+                found_book[6],
+                found_book[7],
+            )
         else:
             print("No result")
 
@@ -87,14 +108,21 @@ while True:
         found_category = jmaro_library.search_by_category(search_category)
         if found_category:
             for book in found_category:
-                print(book.name, book.author, book.publisher, book.year, book.valume, book.category)
+                print(book[1], book[2], book[3], book[4], book[5], book[6], book[7])
         else:
             print("No result")
+
     elif choice == "4":
+        all_books = jmaro_library.list_all_books()
+        if all_books:
+            for book in all_books:
+                print(book[1], book[2], book[3], book[4], book[5], book[6], book[7])
+        else:
+            print("No books found")
+
+    elif choice == "5":
         print("Goodbye")
         break
+
     else:
         print("Enter correct number")
-
-# for book in jmaro_library.books:
-#     print(book.name)
